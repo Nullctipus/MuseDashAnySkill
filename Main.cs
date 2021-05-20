@@ -25,7 +25,7 @@ namespace AnySkill
             if (ShowMenu)
             {
                 GUI.Box(new Rect(Screen.width - 460, 0, 460, Screen.height),"Any Skill");
-                GUI.Label(new Rect(Screen.width - 200, 30, 200, 20), "Character Skill: "+Main.CharacterSkill);
+                GUI.Label(new Rect(Screen.width - 200, 30, 200, 20), "Character Skill: "+Main.CharacterSkill.ToString());
                 if (GUI.Button(new Rect(Screen.width-200,60,200,20),"Default"))
                 {
                     Main.CharacterSkill = -1;
@@ -37,7 +37,7 @@ namespace AnySkill
                         Main.CharacterSkill = i;
                     }
                 }
-                GUI.Label(new Rect(Screen.width - 450, 30, 200, 20), "Elfin Skill: "+Main.ElfinSkill);
+                GUI.Label(new Rect(Screen.width - 450, 30, 200, 20), "Elfin Skill: "+Main.ElfinSkill.ToString());
                 if (GUI.Button(new Rect(Screen.width - 450, 60, 200, 20), "Default"))
                 {
                     Main.ElfinSkill = -1;
@@ -89,7 +89,16 @@ namespace AnySkill
             Harmony harmony = new Harmony("moe.bustr75.skill");
             harmony.Patch(typeof(MainManager).GetMethod("InitLanguage", BindingFlags.NonPublic | BindingFlags.Instance), null, GetPatch(nameof(OnStart)));
             harmony.Patch(typeof(SkillManager).GetMethod("Apply"), GetPatch(nameof(SkillManagerApplyPrefix)), GetPatch(nameof(SkillManagerApplyPostfix)));
-            harmony.Patch(typeof(StatisticsManager).GetMethod("OnBattleEnd"), GetPatch(nameof(OnBattleEndPrefix)), GetPatch(nameof(OnBattleEndPostfix)));
+            //harmony.Patch(typeof(StatisticsManager).GetMethod("OnBattleEnd"), GetPatch(nameof(OnBattleEndPrefix)), GetPatch(nameof(OnBattleEndPostfix)));
+            harmony.Patch(typeof(ServerManager).GetMethod("UploadScore"), GetPatch(nameof(UploadScore)));
+        }
+        private static bool UploadScore(string musicUid, int musicDifficulty, ref string characterUid, ref string elfinUid, int hp, int score, float acc, int combo, string evaluate, int miss, Newtonsoft.Json.Linq.JArray beats, string bmsVersion, Action<int> callback)
+        {
+            if (CharacterSkill == 2)
+                return false;
+            characterUid = CharacterSkill.ToString();
+            elfinUid = ElfinSkill.ToString();
+            return true;
         }
         private static void OnStart()
         {
@@ -97,7 +106,7 @@ namespace AnySkill
             UnityEngine.Object.DontDestroyOnLoad(gameObject);
             gameObject.AddComponent<Menu>();
         }
-        private static void OnBattleEndPrefix(bool fail = false)
+        /*private static void OnBattleEndPrefix(bool fail = false)
         {
             LastCharacter = Singleton<DataManager>.instance["Account"]["SelectedRoleIndex"].GetResult<int>();
             if (CharacterSkill != -1)
@@ -120,7 +129,7 @@ namespace AnySkill
             {
                 Singleton<DataManager>.instance["Account"]["SelectedElfinIndex"].SetResult(LastElfin);
             }
-        }
+        }*/
         private static void SkillManagerApplyPrefix()
         {
             LastCharacter = Singleton<DataManager>.instance["Account"]["SelectedRoleIndex"].GetResult<int>();
