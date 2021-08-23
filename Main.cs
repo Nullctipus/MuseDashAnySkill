@@ -20,7 +20,7 @@ namespace AnySkill
     public class Menu : MonoBehaviour
     {
         public static Menu Instance;
-        public static string CurrentDirectory = Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
+        public static string CurrentDirectory = string.IsNullOrEmpty(Assembly.GetExecutingAssembly().Location) ? Environment.CurrentDirectory : Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
         KeyCode MenuKey = KeyCode.F10;
         public static bool ShowMenu = false;
         void OnGUI()
@@ -95,16 +95,28 @@ namespace AnySkill
             harmony.Patch(typeof(MainManager).GetMethod("InitLanguage", BindingFlags.NonPublic | BindingFlags.Instance), null, GetPatch(nameof(OnStart)));
             harmony.Patch(typeof(SkillManager).GetMethod("Apply"), GetPatch(nameof(SkillManagerApplyPrefix)), GetPatch(nameof(SkillManagerApplyPostfix)));
             //harmony.Patch(typeof(StatisticsManager).GetMethod("OnBattleEnd"), GetPatch(nameof(OnBattleEndPrefix)), GetPatch(nameof(OnBattleEndPostfix)));
-            harmony.Patch(typeof(ServerManager).GetMethod("UploadScore"), GetPatch(nameof(UploadScore)));
+            harmony.Patch(typeof(StatisticsManager).GetMethod("OnBattleEnd"), GetPatch(nameof(OnBattleEnd)));
         }
-        [HarmonyBefore("moe.mdmc.headquarters")]
+
+        private static void OnBattleEnd()
+        {
+            if (CharacterSkill != -1)
+            {
+                Singleton<DataManager>.instance["Account"]["SelectedRoleIndex"].SetResult(LastCharacter);
+            }
+            if (ElfinSkill != -1)
+            {
+                Singleton<DataManager>.instance["Account"]["SelectedElfinIndex"].SetResult(LastElfin);
+            }
+        }
+        /*[HarmonyBefore("moe.mdmc.headquarters")]
         private static bool UploadScore(string musicUid, int musicDifficulty, ref string characterUid, ref string elfinUid, int hp, int score, float acc, int combo, string evaluate, int miss, Newtonsoft.Json.Linq.JArray beats, string bmsVersion, Action<int> callback)
         {
             if (CharacterSkill == 2 || Singleton<BattleProperty>.instance.isAutoPlay) return false;
             characterUid = CharacterSkill.ToString();
             elfinUid = ElfinSkill.ToString();
             return true;
-        }
+        }*/
         private static void OnStart()
         {
             GameObject gameObject = new GameObject("AnySkill");
