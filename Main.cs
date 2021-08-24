@@ -95,19 +95,21 @@ namespace AnySkill
             harmony.Patch(typeof(MainManager).GetMethod("InitLanguage", BindingFlags.NonPublic | BindingFlags.Instance), null, GetPatch(nameof(OnStart)));
             harmony.Patch(typeof(SkillManager).GetMethod("Apply"), GetPatch(nameof(SkillManagerApplyPrefix)), GetPatch(nameof(SkillManagerApplyPostfix)));
             //harmony.Patch(typeof(StatisticsManager).GetMethod("OnBattleEnd"), GetPatch(nameof(OnBattleEndPrefix)), GetPatch(nameof(OnBattleEndPostfix)));
-            harmony.Patch(typeof(StatisticsManager).GetMethod("OnBattleEnd"), GetPatch(nameof(OnBattleEnd)));
+            harmony.Patch(typeof(StageBattleComponent).GetMethod("End"), GetPatch(nameof(OnBattleEndPrefix)), GetPatch(nameof(SkillManagerApplyPostfix)));
+            harmony.Patch(typeof(StageBattleComponent).GetMethod("Dead"), GetPatch(nameof(OnBattleEndPrefix)), GetPatch(nameof(SkillManagerApplyPostfix)));
         }
 
-        private static void OnBattleEnd()
+        private static void OnBattleEndPrefix()
         {
             if (CharacterSkill != -1)
             {
-                Singleton<DataManager>.instance["Account"]["SelectedRoleIndex"].SetResult(LastCharacter);
+                Singleton<DataManager>.instance["Account"]["SelectedRoleIndex"].SetResult(CharacterSkill);
             }
             if (ElfinSkill != -1)
             {
-                Singleton<DataManager>.instance["Account"]["SelectedElfinIndex"].SetResult(LastElfin);
+                Singleton<DataManager>.instance["Account"]["SelectedElfinIndex"].SetResult(CharacterSkill);
             }
+            ModLogger.AddLog("", "", Singleton<DataManager>.instance["Account"]["SelectedElfinIndex"].GetResult<int>());
         }
         /*[HarmonyBefore("moe.mdmc.headquarters")]
         private static bool UploadScore(string musicUid, int musicDifficulty, ref string characterUid, ref string elfinUid, int hp, int score, float acc, int combo, string evaluate, int miss, Newtonsoft.Json.Linq.JArray beats, string bmsVersion, Action<int> callback)
